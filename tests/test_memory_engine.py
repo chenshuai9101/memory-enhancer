@@ -13,8 +13,7 @@ from scripts.memory_engine import (
     memory_retrieve_api, 
     memory_clean_api,
     IntentRecognizer,
-    ImportanceEvaluator,
-    MemoryStore
+    ImportanceEvaluator
 )
 
 def test_memory_store():
@@ -37,7 +36,7 @@ def test_memory_store():
         category="fact"
     )
     assert result2["success"] == True
-    print(f"✅ 高重要性评估成功")
+    print("✅ 高重要性评估成功")
     
     return True
 

@@ -4,15 +4,17 @@ Memory-Enhancer Coze集成脚本
 用于扣子平台的记忆管理功能实现
 """
 
-import json
+import itertools
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List
 
 
 class MemoryStore:
     """记忆存储引擎"""
     
+    _id_counter = itertools.count()
+
     def __init__(self):
         self.memory_db = {}  # 内存存储，模拟数据库
         self.user_profile = {}  # 用户画像存储
@@ -20,7 +22,7 @@ class MemoryStore:
     def store(self, content: str, importance: int = 5, 
               category: str = "context", ttl: int = 86400) -> Dict:
         """存储记忆"""
-        memory_id = f"mem_{int(time.time() * 1000)}"
+        memory_id = f"mem_{int(time.time() * 1000)}_{next(self._id_counter)}"
         memory = {
             "id": memory_id,
             "content": content,
@@ -81,15 +83,23 @@ class MemoryStore:
         return {"success": True, "removed_count": len(removed)}
     
     def _calculate_relevance(self, query: str, content: str) -> float:
-        """计算查询与记忆的相关性"""
-        query_words = set(query.lower().split())
-        content_words = set(content.lower().split())
-        
-        if not query_words:
+        """计算查询与记忆内容的相关性（兼容中文）"""
+        if not query:
             return 0.0
             
-        intersection = query_words & content_words
-        return len(intersection) / len(query_words)
+        query = query.lower()
+        content = content.lower()
+        
+        # 英文按词匹配
+        query_words = [w for w in query.split() if w]
+        if query_words:
+            content_words = set(content.split())
+            matched = sum(1 for w in query_words if w in content_words)
+            if matched:
+                return matched / len(query_words)
+        
+        # 中文按子串匹配
+        return 1.0 if query in content else 0.0
 
 
 class IntentRecognizer:
@@ -139,10 +149,10 @@ class ImportanceEvaluator:
             if keyword in content_lower:
                 score -= 1
         
-        # 检查内容长度
-        if len(content) > 100:
+        # 检查内容长度（中文短句场景下调低阈值）
+        if len(content) > 20:
             score += 1
-        elif len(content) < 20:
+        elif len(content) < 10:
             score -= 1
         
         return max(1, min(10, score))

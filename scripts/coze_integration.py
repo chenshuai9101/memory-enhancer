@@ -4,7 +4,7 @@ Coze集成层 - memory-enhancer Skill的扣子平台集成
 """
 
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 
 # ============== Coze变量定义 ==============
